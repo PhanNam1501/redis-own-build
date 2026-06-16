@@ -62,7 +62,7 @@ func handleConnection(conn net.Conn) {
 			if !ok {
 				conn.Write([]byte("$-1\r\n"))
 			} else {
-				response := fmt.Sprintf("$%d\r\n%s\r\n", len(res[1]), res[1])
+				response := fmt.Sprintf("$%d\r\n%s\r\n", len(redisMap[res[1]]), redisMap[res[1]])
 				conn.Write([]byte(response))
 				// conn.Write([]byte(redisMap[res[1]]))
 			}
