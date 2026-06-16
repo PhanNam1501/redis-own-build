@@ -12,10 +12,12 @@ import (
 var _ = net.Listen
 var _ = os.Exit
 
+var redisMap map[string]string
+
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
-
+	redisMap = make(map[string]interface{})
 	// Uncomment the code below to pass the first stage
 	//
 	l, err := net.Listen("tcp", "0.0.0.0:6379")
@@ -52,6 +54,16 @@ func handleConnection(conn net.Conn) {
 		case res[0] == "ECHO" && len(res) > 1:
 			response := fmt.Sprintf("$%d\r\n%s\r\n", len(res[1]), res[1])
 			conn.Write([]byte(response))
+		case res[0] == "SET" && len(res) > 2:
+			redisMap[res[1]] = res[2]
+			conn.Write([]byte("+OK\r\n"))
+		case res[0] == "GET" && len(res) > 1:
+			_, ok := redisMap[res[1]]
+			if !ok {
+				conn.Write([]byte("$-1\r\n"))
+			} else {
+				conn.Write([]byte(redisMap[res[1]]))
+			}
 		}
 	}
 }
