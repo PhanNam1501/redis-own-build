@@ -50,7 +50,7 @@ func handleConnection(conn net.Conn) {
 		case res[0] == "PING":
 			conn.Write([]byte("+PONG\r\n"))
 		case res[0] == "ECHO" && len(res) > 1:
-			response := fmt.Sprintf("$%d\\r\\n%s\\r\\n", len(res[1]), res[1])
+			response := fmt.Sprintf("$%d\r\n%s\r\n", len(res[1]), res[1])
 			conn.Write([]byte(response))
 		}
 	}

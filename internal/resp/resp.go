@@ -22,7 +22,7 @@ func (r *Resp) DecodeResp() []string {
 
 	resp := string(buf[:n])
 
-	parts := strings.Split(resp, `\r\n`)
+	parts := strings.Split(resp, "\r\n")
 	var result []string
 
 	for _, part := range parts {
