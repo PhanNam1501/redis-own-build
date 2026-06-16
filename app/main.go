@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+
+	"github.com/codecrafters-io/redis-starter-go/internal/resp"
 )
 
 // Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
@@ -34,12 +36,22 @@ func main() {
 }
 
 func handleConnection(conn net.Conn) {
-	buf := make([]byte, 1024)
 	for {
-		_, err := conn.Read(buf)
-		if err != nil {
+		r := resp.NewResp(conn)
+		res := r.DecodeResp()
+		if res == nil {
 			break
 		}
-		conn.Write([]byte("+PONG\r\n"))
+
+		if len(res) == 0 {
+			continue
+		}
+		switch {
+		case res[0] == "PING":
+			conn.Write([]byte("+PONG\r\n"))
+		case res[0] == "ECHO" && len(res) > 1:
+			response := fmt.Sprintf("$%d\\r\\n%s\\r\\n", len(res[1]), res[1])
+			conn.Write([]byte(response))
+		}
 	}
 }
