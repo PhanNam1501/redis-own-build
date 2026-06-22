@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: pnam-redis-server
+    ports:
+      - "6379:6379"
+    # Tùy chọn: Lưu data xuống volume
+    volumes:
+      - redis_data:/app/data
+    # Tùy chọn: Restart tự động
+    restart: unless-stopped
+    # Tùy chọn: Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+volumes:
+  redis_data:

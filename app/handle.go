@@ -1,10 +1,14 @@
 package main
 
 import (
+	"container/list"
 	"fmt"
 	"net"
+	"strconv"
+	"sync"
 	"time"
 
+	"github.com/codecrafters-io/redis-starter-go/internal/queue"
 	"github.com/codecrafters-io/redis-starter-go/internal/resp"
 )
 
@@ -14,6 +18,8 @@ type RedisValue struct {
 }
 
 var redisMap map[string]*RedisValue
+var mu sync.RWMutex
+var listMap queue.Queue
 
 func handleConnection(conn net.Conn) {
 	for {
@@ -35,18 +41,23 @@ func handleConnection(conn net.Conn) {
 		case res[0] == "SET" && len(res) > 2:
 			expireAt := int64(0)
 			if len(res) == 5 && res[3] == "PX" {
-				expireMs := 0
-				for _, x := range res[4] {
-					expireMs = expireMs*10 + int(x-'0')
+				expireMs, err := strconv.ParseInt(res[4], 10, 64)
+				if err != nil {
+					conn.Write([]byte("-ERR invalid expire time\r\n"))
+					continue
 				}
-				expireAt = time.Now().UnixMilli() + int64(expireMs)
+				expireAt = time.Now().UnixMilli() + expireMs
 			}
+			mu.Lock()
 			redisMap[res[1]] = &RedisValue{
 				Value:    res[2],
 				ExpireAt: expireAt,
 			}
+			mu.Unlock()
 			conn.Write([]byte("+OK\r\n"))
 		case res[0] == "GET" && len(res) > 1:
+			mu.RLock()
+			defer mu.RUnlock()
 			val, ok := redisMap[res[1]]
 			if !ok {
 				conn.Write([]byte("$-1\r\n"))
@@ -57,6 +68,22 @@ func handleConnection(conn net.Conn) {
 				response := fmt.Sprintf("$%d\r\n%s\r\n", len(val.Value), val.Value)
 				conn.Write([]byte(response))
 			}
+		case res[0] == "RPUSH" && len(res) > 2:
+			mu.Lock()
+			l, ok := listMap.CheckExist(res[1])
+
+			if !ok {
+				l = list.New()
+				listMap.Set(res[1], l) // dùng method thay vì index trực tiếp
+			}
+			for _, elem := range res[2:] {
+				l.PushBack(elem)
+			}
+			length := l.Len()
+			mu.Unlock()
+
+			response := fmt.Sprintf(":%d\r\n", length)
+			conn.Write([]byte(response))
 		}
 	}
 }
