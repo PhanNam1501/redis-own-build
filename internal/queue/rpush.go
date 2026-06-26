@@ -15,6 +15,12 @@ func (q *queue) Set(key string, l []string) {
 
 func (q *queue) Query(key string, l, r int) []string {
 	arr := q.listMap[key]
+	size := len(arr)
+	if l > size || l > r-1 {
+		return []string{}
+	} else if r > size {
+		r = size
+	}
 	res := []string{}
 	for i := l; i < r; i++ {
 		res = append(res, arr[i])
