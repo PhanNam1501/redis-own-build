@@ -81,6 +81,11 @@ func handleConnection(conn net.Conn) {
 
 			response := fmt.Sprintf(":%d\r\n", length)
 			conn.Write([]byte(response))
+		case res[0] == "LPOP" && len(res) == 2:
+			mu.Lock()
+			start := listMap.LPOP(res[1])
+			response := fmt.Sprintf("$%d\r\n%s\r\n", len(start), start)
+			conn.Write([]byte(response))
 		case res[0] == "LRANGE" && len(res) > 2:
 			mu.RLock()
 			start, _ := strconv.Atoi(res[2])

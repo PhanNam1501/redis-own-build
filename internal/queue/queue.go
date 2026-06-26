@@ -24,6 +24,12 @@ func (q *queue) LPush(key string, values ...string) int {
 	return len(newL)
 }
 
+func (q *queue) LPOP(key string) string {
+	s := q.listMap[key][0]
+	q.listMap[key] = q.listMap[key][1:len(q.listMap[key])]
+	return s
+}
+
 func (q *queue) CheckExist(key string) ([]string, bool) {
 	l, ok := q.listMap[key]
 	return l, ok

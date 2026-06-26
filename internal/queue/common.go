@@ -4,6 +4,7 @@ type Queue interface {
 	Len(key string) int
 	RPush(key string, values ...string) int
 	LPush(key string, values ...string) int
+	LPOP(key string) string
 	CheckExist(key string) ([]string, bool)
 	Set(key string, l []string)
 	Query(key string, l, r int) []string
