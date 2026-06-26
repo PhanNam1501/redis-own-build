@@ -84,7 +84,7 @@ func handleConnection(conn net.Conn) {
 
 			response := fmt.Sprintf(":%d\r\n", length)
 			conn.Write([]byte(response))
-		case res[0] == "LRANGE" && len(res) > 4:
+		case res[0] == "LRANGE" && len(res) > 2:
 			mu.RLock()
 			start, _ := strconv.Atoi(res[2])
 			end, _ := strconv.Atoi(res[3])
