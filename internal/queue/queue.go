@@ -1,5 +1,9 @@
 package queue
 
+func (q *queue) Len(key string) int {
+	return len(q.listMap[key])
+}
+
 func (q *queue) RPush(key string, values ...string) int {
 	l := q.listMap[key]
 	for _, v := range values {

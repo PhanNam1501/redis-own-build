@@ -93,6 +93,11 @@ func handleConnection(conn net.Conn) {
 				response += fmt.Sprintf("$%d\r\n%s\r\n", len(elem), elem)
 			}
 			conn.Write([]byte(response))
+		case res[0] == "LLEN" && len(res) == 2:
+			mu.RLock()
+			res := listMap.Len(res[1])
+			response := fmt.Sprintf(":%d\r\n", res)
+			conn.Write([]byte(response))
 		}
 	}
 }

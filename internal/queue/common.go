@@ -1,6 +1,7 @@
 package queue
 
 type Queue interface {
+	Len(key string) int
 	RPush(key string, values ...string) int
 	LPush(key string, values ...string) int
 	CheckExist(key string) ([]string, bool)
