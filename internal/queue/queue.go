@@ -1,7 +1,21 @@
 package queue
 
-func (q *queue) RPush(key string, value string) {
-	q.listMap[key] = append(q.listMap[key], value)
+func (q *queue) RPush(key string, values ...string) int {
+	l := q.listMap[key]
+	for _, v := range values {
+		l = append(l, v)
+	}
+	q.listMap[key] = l
+	return len(l)
+}
+
+func (q *queue) LPush(key string, values ...string) int {
+	l := q.listMap[key]
+	newL := make([]string, 0, len(l)+len(values))
+	newL = append(newL, values...)
+	newL = append(newL, l...)
+	q.listMap[key] = newL
+	return len(newL)
 }
 
 func (q *queue) CheckExist(key string) ([]string, bool) {

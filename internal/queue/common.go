@@ -1,7 +1,8 @@
 package queue
 
 type Queue interface {
-	RPush(key string, value string)
+	RPush(key string, values ...string) int
+	LPush(key string, values ...string) int
 	CheckExist(key string) ([]string, bool)
 	Set(key string, l []string)
 	Query(key string, l, r int) []string

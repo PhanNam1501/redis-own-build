@@ -69,17 +69,14 @@ func handleConnection(conn net.Conn) {
 			}
 		case res[0] == "RPUSH" && len(res) > 2:
 			mu.Lock()
-			l, ok := listMap.CheckExist(res[1])
+			length := listMap.RPush(res[1], res[2:]...)
+			mu.Unlock()
 
-			if !ok {
-				l = []string{}
-				listMap.Set(res[1], l)
-			}
-			for _, elem := range res[2:] {
-				l = append(l, elem)
-			}
-			listMap.Set(res[1], l)
-			length := len(l)
+			response := fmt.Sprintf(":%d\r\n", length)
+			conn.Write([]byte(response))
+		case res[0] == "LPUSH" && len(res) > 2:
+			mu.Lock()
+			length := listMap.LPush(res[1], res[2:]...)
 			mu.Unlock()
 
 			response := fmt.Sprintf(":%d\r\n", length)
