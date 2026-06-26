@@ -24,9 +24,14 @@ func (q *queue) LPush(key string, values ...string) int {
 	return len(newL)
 }
 
-func (q *queue) LPOP(key string) string {
-	s := q.listMap[key][0]
-	q.listMap[key] = q.listMap[key][1:len(q.listMap[key])]
+func (q *queue) LPOP(key string, cnt int) []string {
+	s := []string{}
+	for cnt > 0 {
+		first := q.listMap[key][0]
+		q.listMap[key] = q.listMap[key][1:len(q.listMap[key])]
+		s = append(s, first)
+	}
+
 	return s
 }
 

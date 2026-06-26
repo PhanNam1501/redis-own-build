@@ -81,11 +81,21 @@ func handleConnection(conn net.Conn) {
 
 			response := fmt.Sprintf(":%d\r\n", length)
 			conn.Write([]byte(response))
-		case res[0] == "LPOP" && len(res) == 2:
+		case res[0] == "LPOP" && len(res) > 2:
 			mu.Lock()
-			start := listMap.LPOP(res[1])
+			arr := []string{}
+			if len(res) == 3 {
+				cnt, _ := strconv.Atoi(res[2])
+				arr = listMap.LPOP(res[1], cnt)
+			} else {
+				arr = listMap.LPOP(res[1], 1)
+			}
+
 			mu.Unlock()
-			response := fmt.Sprintf("$%d\r\n%s\r\n", len(start), start)
+			response := fmt.Sprintf("*%d\r\n", len(arr))
+			for _, elem := range arr {
+				response += fmt.Sprintf("$%d\r\n%s\r\n", len(elem), elem)
+			}
 			conn.Write([]byte(response))
 		case res[0] == "LRANGE" && len(res) > 2:
 			mu.RLock()
