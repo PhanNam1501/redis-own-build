@@ -23,10 +23,10 @@ func (q *queue) Query(key string, l, r int) []string {
 		l = 0
 	}
 	if r < 0 {
-		r = 0
+		r = size + r
 	}
 	if r < 0 {
-		return []string{}
+		r = 0
 	}
 	if l > size || l > r {
 		return []string{}
