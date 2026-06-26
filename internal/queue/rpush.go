@@ -19,8 +19,14 @@ func (q *queue) Query(key string, l, r int) []string {
 	if l < 0 {
 		l = size + l
 	}
+	if l < 0 {
+		return []string{}
+	}
 	if r < 0 {
 		r = size + r
+	}
+	if r < 0 {
+		return []string{}
 	}
 	if l > size || l > r-1 {
 		return []string{}
