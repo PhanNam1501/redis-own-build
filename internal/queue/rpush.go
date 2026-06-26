@@ -16,6 +16,12 @@ func (q *queue) Set(key string, l []string) {
 func (q *queue) Query(key string, l, r int) []string {
 	arr := q.listMap[key]
 	size := len(arr)
+	if l < 0 {
+		l = size + l
+	}
+	if r < 0 {
+		r = size + r
+	}
 	if l > size || l > r-1 {
 		return []string{}
 	} else if r > size {
