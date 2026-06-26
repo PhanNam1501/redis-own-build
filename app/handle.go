@@ -1,7 +1,6 @@
 package main
 
 import (
-	"container/list"
 	"fmt"
 	"net"
 	"strconv"
@@ -73,16 +72,29 @@ func handleConnection(conn net.Conn) {
 			l, ok := listMap.CheckExist(res[1])
 
 			if !ok {
-				l = list.New()
-				listMap.Set(res[1], l) // dùng method thay vì index trực tiếp
+				l = []string{}
+				listMap.Set(res[1], l)
 			}
 			for _, elem := range res[2:] {
-				l.PushBack(elem)
+				l = append(l, elem)
 			}
-			length := l.Len()
+			listMap.Set(res[1], l)
+			length := len(l)
 			mu.Unlock()
 
 			response := fmt.Sprintf(":%d\r\n", length)
+			conn.Write([]byte(response))
+		case res[0] == "LRANGE" && len(res) > 4:
+			mu.RLock()
+			start, _ := strconv.Atoi(res[2])
+			end, _ := strconv.Atoi(res[3])
+			elements := listMap.Query(res[1], start, end+1)
+			mu.RUnlock()
+
+			response := fmt.Sprintf("*%d\r\n", len(elements))
+			for _, elem := range elements {
+				response += fmt.Sprintf("$%d\r\n%s\r\n", len(elem), elem)
+			}
 			conn.Write([]byte(response))
 		}
 	}

@@ -1,19 +1,18 @@
 package queue
 
-import "container/list"
-
 type Queue interface {
 	RPush(key string, value string)
-	CheckExist(key string) (*list.List, bool)
-	Set(key string, l *list.List)
+	CheckExist(key string) ([]string, bool)
+	Set(key string, l []string)
+	Query(key string, l, r int) []string
 }
 
 type queue struct {
-	listMap map[string]*list.List
+	listMap map[string][]string
 }
 
 func NewQueue() Queue {
 	return &queue{
-		listMap: make(map[string]*list.List),
+		listMap: make(map[string][]string),
 	}
 }
