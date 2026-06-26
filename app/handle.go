@@ -88,7 +88,7 @@ func handleConnection(conn net.Conn) {
 			mu.RLock()
 			start, _ := strconv.Atoi(res[2])
 			end, _ := strconv.Atoi(res[3])
-			elements := listMap.Query(res[1], start, end+1)
+			elements := listMap.Query(res[1], start, end)
 			mu.RUnlock()
 
 			response := fmt.Sprintf("*%d\r\n", len(elements))

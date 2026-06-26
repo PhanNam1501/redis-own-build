@@ -28,7 +28,7 @@ func (q *queue) Query(key string, l, r int) []string {
 		r = size
 	}
 	res := []string{}
-	for i := l; i < r; i++ {
+	for i := l; i < r+1; i++ {
 		res = append(res, arr[i])
 	}
 	return res
