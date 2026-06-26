@@ -12,7 +12,9 @@ func (q *queue) RPush(key string, values ...string) int {
 func (q *queue) LPush(key string, values ...string) int {
 	l := q.listMap[key]
 	newL := make([]string, 0, len(l)+len(values))
-	newL = append(newL, values...)
+	for i := len(values) - 1; i >= 0; i-- {
+		newL = append(newL, values[i])
+	}
 	newL = append(newL, l...)
 	q.listMap[key] = newL
 	return len(newL)
