@@ -102,7 +102,7 @@ func handleConnection(conn net.Conn) {
 				conn.Write([]byte(response))
 			}
 		case res[0] == "BLPOP" && len(res) == 3:
-			exp, err := strconv.ParseInt(res[2], 10, 64)
+			exp, err := strconv.ParseFloat(res[2], 64)
 			if err != nil {
 				conn.Write([]byte("-ERR invalid timeout\r\n"))
 				continue

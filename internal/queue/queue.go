@@ -85,7 +85,7 @@ func (q *queue) Query(key string, l, r int) []string {
 	return res
 }
 
-func (q *queue) BLPOP(key string, exp int64) []string {
+func (q *queue) BLPOP(key string, exp float64) []string {
 	client := &WaitingClient{
 		ch: make(chan struct{}),
 	}

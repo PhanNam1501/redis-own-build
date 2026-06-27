@@ -8,7 +8,7 @@ type Queue interface {
 	CheckExist(key string) ([]string, bool)
 	Set(key string, l []string)
 	Query(key string, l, r int) []string
-	BLPOP(key string, exp int64) []string
+	BLPOP(key string, exp float64) []string
 }
 type WaitingClient struct {
 	ch chan struct{}
