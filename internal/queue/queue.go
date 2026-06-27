@@ -90,6 +90,11 @@ func (q *queue) BLPOP(key string, exp int64) []string {
 		ch: make(chan struct{}),
 	}
 	q.waiting[key] = append(q.waiting[key], client)
+	if exp == 0 {
+		<-client.ch
+		res := q.LPOP(key, 1)
+		return res
+	}
 	select {
 	case <-client.ch:
 		res := q.LPOP(key, 1)
