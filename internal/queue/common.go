@@ -8,10 +8,14 @@ type Queue interface {
 	CheckExist(key string) ([]string, bool)
 	Set(key string, l []string)
 	Query(key string, l, r int) []string
+	BLPOP(key string, exp int64) []string
 }
-
+type WaitingClient struct {
+	ch chan struct{}
+}
 type queue struct {
 	listMap map[string][]string
+	waiting map[string][]*WaitingClient
 }
 
 func NewQueue() Queue {

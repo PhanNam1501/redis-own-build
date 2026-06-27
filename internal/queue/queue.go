@@ -1,5 +1,9 @@
 package queue
 
+import (
+	"time"
+)
+
 func (q *queue) Len(key string) int {
 	return len(q.listMap[key])
 }
@@ -10,6 +14,11 @@ func (q *queue) RPush(key string, values ...string) int {
 		l = append(l, v)
 	}
 	q.listMap[key] = l
+	if len(q.waiting[key]) > 0 {
+		waiter := q.waiting[key][0]
+		q.waiting[key] = q.waiting[key][1:len(q.waiting[key])]
+		close(waiter.ch)
+	}
 	return len(l)
 }
 
@@ -74,4 +83,18 @@ func (q *queue) Query(key string, l, r int) []string {
 		res = append(res, arr[i])
 	}
 	return res
+}
+
+func (q *queue) BLPOP(key string, exp int64) []string {
+	client := &WaitingClient{
+		ch: make(chan struct{}),
+	}
+	q.waiting[key] = append(q.waiting[key], client)
+	select {
+	case <-client.ch:
+		res := q.LPOP(key, 1)
+		return res
+	case <-time.After(time.Duration(exp) * time.Second):
+		return []string{}
+	}
 }

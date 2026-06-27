@@ -101,7 +101,19 @@ func handleConnection(conn net.Conn) {
 				}
 				conn.Write([]byte(response))
 			}
-
+		case res[0] == "BLPOP" && len(res) == 3:
+			exp, err := strconv.ParseInt(res[2], 10, 64)
+			if err != nil {
+				conn.Write([]byte("-ERR invalid timeout\r\n"))
+				continue
+			}
+			arr := listMap.BLPOP(res[1], exp)
+			if len(arr) == 0 {
+				conn.Write([]byte("*-1\r\n"))
+			} else {
+				response := fmt.Sprintf("*2\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n", len(res[1]), res[1], len(arr[0]), arr[0])
+				conn.Write([]byte(response))
+			}
 		case res[0] == "LRANGE" && len(res) > 2:
 			mu.RLock()
 			start, _ := strconv.Atoi(res[2])
