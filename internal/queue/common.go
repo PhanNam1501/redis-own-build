@@ -21,5 +21,6 @@ type queue struct {
 func NewQueue() Queue {
 	return &queue{
 		listMap: make(map[string][]string),
+		waiting: make(map[string][]*WaitingClient),
 	}
 }
