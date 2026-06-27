@@ -99,7 +99,7 @@ func (q *queue) BLPOP(key string, exp float64) []string {
 	case <-client.ch:
 		res := q.LPOP(key, 1)
 		return res
-	case <-time.After(time.Duration(exp) * time.Second):
+	case <-time.After(time.Duration(exp * float64(time.Second))):
 		return []string{}
 	}
 }
