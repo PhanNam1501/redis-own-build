@@ -132,14 +132,20 @@ func handleConnection(conn net.Conn) {
 			response := fmt.Sprintf(":%d\r\n", res)
 			conn.Write([]byte(response))
 		case res[0] == "TYPE" && len(res) == 2:
-			_, ok := listMap.CheckExist(res[1])
-			if ok {
-				response := "+string\r\n"
-				conn.Write([]byte(response))
+			mu.RLock()
+			_, stringExists := redisMap[res[1]]
+			_, listExists := listMap.CheckExist(res[1])
+			mu.RUnlock()
+
+			var response string
+			if stringExists {
+				response = "+string\r\n"
+			} else if listExists {
+				response = "+list\r\n"
 			} else {
-				response := "+none\r\n"
-				conn.Write([]byte(response))
+				response = "+none\r\n"
 			}
+			conn.Write([]byte(response))
 		}
 	}
 }
