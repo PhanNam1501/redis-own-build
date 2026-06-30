@@ -13,12 +13,22 @@ import (
 
 type RedisValue struct {
 	Value    string
-	ExpireAt int64 // millisecond timestamp when key expires
+	ExpireAt int64
+}
+
+type Stream struct {
+	Entries []Entry
+}
+
+type Entry struct {
+	ID     string
+	Values map[string]string
 }
 
 var redisMap map[string]*RedisValue
 var mu sync.RWMutex
 var listMap queue.Queue
+var streams map[string]*Stream
 
 func handleConnection(conn net.Conn) {
 	for {
@@ -135,6 +145,7 @@ func handleConnection(conn net.Conn) {
 			mu.RLock()
 			_, stringExists := redisMap[res[1]]
 			_, listExists := listMap.CheckExist(res[1])
+			_, streamExists := streams[res[1]]
 			mu.RUnlock()
 
 			var response string
@@ -142,9 +153,31 @@ func handleConnection(conn net.Conn) {
 				response = "+string\r\n"
 			} else if listExists {
 				response = "+list\r\n"
+			} else if streamExists {
+				response = "+stream\r\n"
 			} else {
 				response = "+none\r\n"
 			}
+			conn.Write([]byte(response))
+		case res[0] == "XADD" && len(res) >= 2:
+			mu.Lock()
+			defer mu.Unlock()
+			keyStream := res[1]
+			id := res[2]
+			entries := []Entry{}
+			for i := 3; i < len(res)-1; i += 2 {
+				entry := Entry{
+					ID: id,
+				}
+				entry.Values[res[i]] = res[i+1]
+				entries = append(entries, entry)
+			}
+			stream := &Stream{
+				Entries: entries,
+			}
+			streams[keyStream] = stream
+			length := (len(res) - 3) / 2
+			response := fmt.Sprintf("$%d\r\n%s\r\n", length, id)
 			conn.Write([]byte(response))
 		}
 	}
