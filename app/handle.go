@@ -161,7 +161,6 @@ func handleConnection(conn net.Conn) {
 			conn.Write([]byte(response))
 		case res[0] == "XADD" && len(res) >= 2:
 			mu.Lock()
-			defer mu.Unlock()
 			keyStream := res[1]
 			id := res[2]
 			entries := []Entry{}
@@ -177,6 +176,7 @@ func handleConnection(conn net.Conn) {
 				Entries: entries,
 			}
 			streams[keyStream] = stream
+			mu.Unlock()
 			response := fmt.Sprintf("$%d\r\n%s\r\n", len(id), id)
 			conn.Write([]byte(response))
 		}
