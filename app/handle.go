@@ -131,6 +131,15 @@ func handleConnection(conn net.Conn) {
 			res := listMap.Len(res[1])
 			response := fmt.Sprintf(":%d\r\n", res)
 			conn.Write([]byte(response))
+		case res[0] == "TYPE" && len(res) == 2:
+			_, ok := listMap.CheckExist(res[1])
+			if ok {
+				response := "+string\r\n"
+				conn.Write([]byte(response))
+			} else {
+				response := "+none\r\n"
+				conn.Write([]byte(response))
+			}
 		}
 	}
 }
