@@ -177,8 +177,7 @@ func handleConnection(conn net.Conn) {
 				Entries: entries,
 			}
 			streams[keyStream] = stream
-			length := (len(res) - 3) / 2
-			response := fmt.Sprintf("$%d\r\n%s\r\n", length, id)
+			response := fmt.Sprintf("$%d\r\n%s\r\n", len(id), id)
 			conn.Write([]byte(response))
 		}
 	}
