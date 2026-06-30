@@ -167,7 +167,8 @@ func handleConnection(conn net.Conn) {
 			entries := []Entry{}
 			for i := 3; i < len(res)-1; i += 2 {
 				entry := Entry{
-					ID: id,
+					ID:     id,
+					Values: make(map[string]string),
 				}
 				entry.Values[res[i]] = res[i+1]
 				entries = append(entries, entry)

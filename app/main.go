@@ -15,6 +15,7 @@ func main() {
 	fmt.Println("Logs from your program will appear here!")
 	redisMap = make(map[string]*RedisValue)
 	listMap = queue.NewQueue()
+	streams = make(map[string]*Stream)
 
 	l, err := net.Listen("tcp", "0.0.0.0:6379")
 	if err != nil {
