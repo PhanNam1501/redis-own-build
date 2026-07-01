@@ -14,6 +14,9 @@ func (s *stream) Add(key string, id string, values map[string]string) (string, e
 		if err != nil {
 			return "", err
 		}
+		if generatedId == "" {
+			return "", &IDError{Message: "ERR Invalid ID format"}
+		}
 		id = generatedId
 	}
 
