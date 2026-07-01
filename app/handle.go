@@ -9,6 +9,7 @@ import (
 
 	"github.com/codecrafters-io/redis-starter-go/internal/queue"
 	"github.com/codecrafters-io/redis-starter-go/internal/resp"
+	"github.com/codecrafters-io/redis-starter-go/internal/stream"
 )
 
 type RedisValue struct {
@@ -16,19 +17,10 @@ type RedisValue struct {
 	ExpireAt int64
 }
 
-type Stream struct {
-	Entries []Entry
-}
-
-type Entry struct {
-	ID     string
-	Values map[string]string
-}
-
 var redisMap map[string]*RedisValue
 var mu sync.RWMutex
 var listMap queue.Queue
-var streams map[string]*Stream
+var streamMap stream.Stream
 
 func handleConnection(conn net.Conn) {
 	for {
@@ -145,7 +137,7 @@ func handleConnection(conn net.Conn) {
 			mu.RLock()
 			_, stringExists := redisMap[res[1]]
 			_, listExists := listMap.CheckExist(res[1])
-			_, streamExists := streams[res[1]]
+			streamExists, _ := streamMap.CheckExist(res[1])
 			mu.RUnlock()
 
 			var response string
@@ -163,22 +155,20 @@ func handleConnection(conn net.Conn) {
 			mu.Lock()
 			keyStream := res[1]
 			id := res[2]
-			entries := []Entry{}
-			for i := 3; i < len(res)-1; i += 2 {
-				entry := Entry{
-					ID:     id,
-					Values: make(map[string]string),
-				}
-				entry.Values[res[i]] = res[i+1]
-				entries = append(entries, entry)
+			values := make(map[string]string)
+			for i := 3; i < len(res); i += 2 {
+				values[res[i]] = res[i+1]
 			}
-			stream := &Stream{
-				Entries: entries,
-			}
-			streams[keyStream] = stream
+			_, ok := streamMap.Add(keyStream, id, values)
 			mu.Unlock()
-			response := fmt.Sprintf("$%d\r\n%s\r\n", len(id), id)
-			conn.Write([]byte(response))
+			var response string
+			if !ok {
+				response = "-ERR The ID specified in XADD is equal or smaller than the target stream top item\r\n"
+				conn.Write([]byte(response))
+			} else {
+				response = fmt.Sprintf("$%d\r\n%s\r\n", len(id), id)
+				conn.Write([]byte(response))
+			}
 		}
 	}
 }
