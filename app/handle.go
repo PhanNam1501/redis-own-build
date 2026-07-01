@@ -154,7 +154,7 @@ func handleConnection(conn net.Conn) {
 		case res[0] == "XADD" && len(res) >= 2:
 			mu.Lock()
 			keyStream := res[1]
-			id := res[2]
+			id := res[1]
 			print(id)
 			values := make(map[string]string)
 			for i := 3; i+1 < len(res); i += 2 {
