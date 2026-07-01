@@ -155,7 +155,6 @@ func handleConnection(conn net.Conn) {
 			mu.Lock()
 			keyStream := res[1]
 			id := res[2]
-			print(id)
 			values := make(map[string]string)
 			for i := 3; i+1 < len(res); i += 2 {
 				values[res[i]] = res[i+1]
