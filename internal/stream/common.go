@@ -5,19 +5,28 @@ type Entry struct {
 	Values map[string]string
 }
 
+type IDError struct {
+	Message string
+}
+
+func (e *IDError) Error() string {
+	return e.Message
+}
+
 type Stream interface {
-	Add(key string, id string, values map[string]string) (string, bool)
+	Add(key string, id string, values map[string]string) (string, error)
 	CheckExist(key string) (bool, bool)
 	Get(key string) ([]Entry, bool)
 }
 
 type stream struct {
 	streamMap map[string][]Entry
-	lastId    string
+	lastIdMap map[string]string
 }
 
 func NewStream() Stream {
 	return &stream{
 		streamMap: make(map[string][]Entry),
+		lastIdMap: make(map[string]string),
 	}
 }

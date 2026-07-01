@@ -159,14 +159,14 @@ func handleConnection(conn net.Conn) {
 			for i := 3; i < len(res); i += 2 {
 				values[res[i]] = res[i+1]
 			}
-			_, ok := streamMap.Add(keyStream, id, values)
+			addedId, err := streamMap.Add(keyStream, id, values)
 			mu.Unlock()
 			var response string
-			if !ok {
-				response = "-ERR The ID specified in XADD is equal or smaller than the target stream top item\r\n"
+			if err != nil {
+				response = fmt.Sprintf("-%s\r\n", err.Error())
 				conn.Write([]byte(response))
 			} else {
-				response = fmt.Sprintf("$%d\r\n%s\r\n", len(id), id)
+				response = fmt.Sprintf("$%d\r\n%s\r\n", len(addedId), addedId)
 				conn.Write([]byte(response))
 			}
 		}

@@ -5,22 +5,24 @@ import (
 	"strings"
 )
 
-func (s *stream) Add(key string, id string, values map[string]string) (string, bool) {
-	ok := s.validate(s.lastId, id)
-	if ok {
-		entry := Entry{
-			ID:     id,
-			Values: values,
-		}
-		s.streamMap[key] = append(s.streamMap[key], entry)
-
-		s.lastId = id
-
-		return id, true
-	} else {
-		return "", false
+func (s *stream) Add(key string, id string, values map[string]string) (string, error) {
+	if id == "0-0" {
+		return "", &IDError{Message: "ERR The ID specified in XADD must be greater than 0-0"}
 	}
 
+	lastId := s.lastIdMap[key]
+	if !s.validate(lastId, id) {
+		return "", &IDError{Message: "ERR The ID specified in XADD is equal or smaller than the target stream top item"}
+	}
+
+	entry := Entry{
+		ID:     id,
+		Values: values,
+	}
+	s.streamMap[key] = append(s.streamMap[key], entry)
+	s.lastIdMap[key] = id
+
+	return id, nil
 }
 
 func (s *stream) CheckExist(key string) (bool, bool) {
