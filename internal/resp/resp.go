@@ -30,8 +30,7 @@ func (r *Resp) DecodeResp() []string {
 		if part == "" {
 			continue
 		}
-		// Skip RESP markers: *<number> (array), $<number> (bulk string size)
-		// But keep * and $ if they are data values (no digits after)
+
 		if strings.HasPrefix(part, "*") && len(part) > 1 && isDigit(part[1]) {
 			continue
 		}
