@@ -156,7 +156,7 @@ func handleConnection(conn net.Conn) {
 			keyStream := res[1]
 			id := res[2]
 			values := make(map[string]string)
-			for i := 3; i < len(res); i += 2 {
+			for i := 3; i+1 < len(res); i += 2 {
 				values[res[i]] = res[i+1]
 			}
 			addedId, err := streamMap.Add(keyStream, id, values)
