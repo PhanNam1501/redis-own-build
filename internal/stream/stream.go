@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -34,7 +35,7 @@ func (s *stream) Add(key string, id string, values map[string]string) (string, e
 	}
 	s.streamMap[key] = append(s.streamMap[key], entry)
 	s.lastIdMap[key] = id
-
+	fmt.Println(id)
 	return id, nil
 }
 
