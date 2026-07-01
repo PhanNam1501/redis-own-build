@@ -34,18 +34,26 @@ func (s *stream) Get(key string) ([]Entry, bool) {
 }
 
 func (s *stream) validate(lastId, id string) bool {
+	if lastId == "" {
+		return true
+	}
+
 	v1 := strings.Split(lastId, "-")
 	v2 := strings.Split(id, "-")
+
+	if len(v1) != 2 || len(v2) != 2 {
+		return false
+	}
+
 	tv11, _ := strconv.Atoi(v1[0])
 	tv12, _ := strconv.Atoi(v1[1])
 	tv21, _ := strconv.Atoi(v2[0])
 	tv22, _ := strconv.Atoi(v2[1])
-	if tv11 < tv21 {
-		return false
-	} else if tv11 == tv21 {
-		if tv12 <= tv22 {
-			return false
-		}
+
+	if tv21 > tv11 {
+		return true
+	} else if tv21 == tv11 {
+		return tv22 > tv12
 	}
-	return true
+	return false
 }
