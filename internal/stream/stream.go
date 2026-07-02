@@ -7,6 +7,9 @@ import (
 )
 
 func (s *stream) Add(key string, id string, values map[string]string) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	lastId := s.lastIdMap[key]
 
 	if strings.Contains(id, "*") {
@@ -41,7 +44,6 @@ func (s *stream) Add(key string, id string, values map[string]string) (string, e
 	s.streamMap[key] = append(s.streamMap[key], entry)
 	s.lastIdMap[key] = id
 
-	s.mu.Lock()
 	var remaining []*WaitingClient
 	for _, client := range s.waiting[key] {
 		if id > client.lastID {
@@ -52,22 +54,27 @@ func (s *stream) Add(key string, id string, values map[string]string) (string, e
 		}
 	}
 	s.waiting[key] = remaining
-	s.mu.Unlock()
 
 	return id, nil
 }
 
 func (s *stream) CheckExist(key string) (bool, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	entries, ok := s.streamMap[key]
 	return ok && len(entries) > 0, ok
 }
 
 func (s *stream) Get(key string) ([]Entry, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	entries, ok := s.streamMap[key]
 	return entries, ok
 }
 
 func (s *stream) Range(key string, startId string, endId string) ([]Entry, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	entries, ok := s.streamMap[key]
 	if !ok {
 		return []Entry{}, false
@@ -106,6 +113,8 @@ func (s *stream) Range(key string, startId string, endId string) ([]Entry, bool)
 }
 
 func (s *stream) ReadGreater(key string, id string) ([]Entry, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	entries, ok := s.streamMap[key]
 	if !ok {
 		return []Entry{}, false

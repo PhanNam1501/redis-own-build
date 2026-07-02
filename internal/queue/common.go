@@ -1,5 +1,7 @@
 package queue
 
+import "sync"
+
 type Queue interface {
 	Len(key string) int
 	RPush(key string, values ...string) int
@@ -16,11 +18,13 @@ type WaitingClient struct {
 type queue struct {
 	listMap map[string][]string
 	waiting map[string][]*WaitingClient
+	mu      sync.RWMutex
 }
 
 func NewQueue() Queue {
 	return &queue{
 		listMap: make(map[string][]string),
 		waiting: make(map[string][]*WaitingClient),
+		mu:      sync.RWMutex{},
 	}
 }

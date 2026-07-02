@@ -5,10 +5,14 @@ import (
 )
 
 func (q *queue) Len(key string) int {
+	q.mu.RLock()
+	defer q.mu.RUnlock()
 	return len(q.listMap[key])
 }
 
 func (q *queue) RPush(key string, values ...string) int {
+	q.mu.Lock()
+	defer q.mu.Unlock()
 	l := q.listMap[key]
 	for _, v := range values {
 		l = append(l, v)
@@ -23,6 +27,8 @@ func (q *queue) RPush(key string, values ...string) int {
 }
 
 func (q *queue) LPush(key string, values ...string) int {
+	q.mu.Lock()
+	defer q.mu.Unlock()
 	l := q.listMap[key]
 	newL := make([]string, 0, len(l)+len(values))
 	for i := len(values) - 1; i >= 0; i-- {
@@ -34,8 +40,10 @@ func (q *queue) LPush(key string, values ...string) int {
 }
 
 func (q *queue) LPOP(key string, cnt int) []string {
+	q.mu.Lock()
+	defer q.mu.Unlock()
 	s := []string{}
-	size := q.Len(key)
+	size := len(q.listMap[key])
 	if cnt > size {
 		cnt = size
 	}
@@ -50,15 +58,21 @@ func (q *queue) LPOP(key string, cnt int) []string {
 }
 
 func (q *queue) CheckExist(key string) ([]string, bool) {
+	q.mu.RLock()
+	defer q.mu.RUnlock()
 	l, ok := q.listMap[key]
 	return l, ok
 }
 
 func (q *queue) Set(key string, l []string) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
 	q.listMap[key] = l
 }
 
 func (q *queue) Query(key string, l, r int) []string {
+	q.mu.RLock()
+	defer q.mu.RUnlock()
 	arr := q.listMap[key]
 	size := len(arr)
 	if l < 0 {
@@ -89,7 +103,10 @@ func (q *queue) BLPOP(key string, exp float64) []string {
 	client := &WaitingClient{
 		ch: make(chan struct{}),
 	}
+	q.mu.Lock()
 	q.waiting[key] = append(q.waiting[key], client)
+	q.mu.Unlock()
+
 	if exp == 0 {
 		<-client.ch
 		res := q.LPOP(key, 1)
@@ -99,7 +116,7 @@ func (q *queue) BLPOP(key string, exp float64) []string {
 	case <-client.ch:
 		res := q.LPOP(key, 1)
 		return res
-	case <-time.After(time.Duration(exp * float64(time.Second))):
+	case <-time.After(time.Duration(exp * float64(time.Millisecond))):
 		return []string{}
 	}
 }
