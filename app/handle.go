@@ -192,7 +192,7 @@ func handleConnection(conn net.Conn) {
 				}
 			}
 			conn.Write([]byte(response))
-		case res[0] == "XREAD" && len(res) >= 4 && res[1] == "STREAMS":
+		case res[0] == "XREAD" && len(res) >= 4 && res[1] == "streams":
 			mu.RLock()
 			numStreams := (len(res) - 2) / 2
 
