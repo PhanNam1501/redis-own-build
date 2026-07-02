@@ -269,9 +269,7 @@ func handleConnection(conn net.Conn) {
 				key := res[keyIdx]
 				id := res[idIdx]
 
-				mu.RLock()
 				entry := streamMap.Block(key, id, timeout)
-				mu.RUnlock()
 
 				if entry.ID == "" {
 					conn.Write([]byte("*-1\r\n"))

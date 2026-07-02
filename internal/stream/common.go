@@ -1,5 +1,7 @@
 package stream
 
+import "sync"
+
 type Entry struct {
 	ID       string
 	Values   map[string]string
@@ -27,11 +29,12 @@ type stream struct {
 	streamMap map[string][]Entry
 	lastIdMap map[string]string
 	waiting   map[string][]*WaitingClient
+	mu        sync.RWMutex
 }
 
 type WaitingClient struct {
-	ch   chan Entry
-	done chan bool
+	lastID string
+	ch     chan Entry
 }
 
 func NewStream() Stream {
@@ -39,5 +42,6 @@ func NewStream() Stream {
 		streamMap: make(map[string][]Entry),
 		lastIdMap: make(map[string]string),
 		waiting:   make(map[string][]*WaitingClient),
+		mu:        sync.RWMutex{},
 	}
 }
