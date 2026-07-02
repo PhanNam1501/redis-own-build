@@ -61,13 +61,18 @@ func (h *Handler) INCR(conn net.Conn, res []string) {
 		response := fmt.Sprintf(":%d\r\n", 1)
 		conn.Write([]byte(response))
 	} else {
-		valInt, _ := strconv.Atoi(val.Value)
-		valInt++
-		h.RedisMap[res[1]] = &RedisValue{
-			Value:    strconv.Itoa(valInt),
-			ExpireAt: val.ExpireAt,
+		valInt, err := strconv.Atoi(val.Value)
+		if err != nil {
+			response := "-ERR value is not an integer or out of range\r\n"
+			conn.Write([]byte(response))
+		} else {
+			valInt++
+			h.RedisMap[res[1]] = &RedisValue{
+				Value:    strconv.Itoa(valInt),
+				ExpireAt: val.ExpireAt,
+			}
+			response := fmt.Sprintf(":%d\r\n", valInt)
+			conn.Write([]byte(response))
 		}
-		response := fmt.Sprintf(":%d\r\n", valInt)
-		conn.Write([]byte(response))
 	}
 }
