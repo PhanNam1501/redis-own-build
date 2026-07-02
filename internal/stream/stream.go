@@ -189,7 +189,7 @@ func (s *stream) Block(key, id string, exp float64) Entry {
 				client.done <- false // Not ready, keep waiting
 				return Entry{}
 			}
-		case <-time.After(time.Duration(exp * float64(time.Second))):
+		case <-time.After(time.Duration(exp * float64(time.Millisecond))):
 			return Entry{}
 		}
 	}
