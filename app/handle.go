@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -192,7 +193,7 @@ func handleConnection(conn net.Conn) {
 				}
 			}
 			conn.Write([]byte(response))
-		case res[0] == "XREAD" && len(res) >= 4 && res[1] == "streams":
+		case res[0] == "XREAD" && len(res) >= 4 && strings.ToUpper(res[1]) == "STREAMS":
 			mu.RLock()
 			numStreams := (len(res) - 2) / 2
 
@@ -249,7 +250,7 @@ func handleConnection(conn net.Conn) {
 				}
 			}
 			conn.Write([]byte(response))
-		case res[0] == "XREAD" && len(res) > 5 && res[1] == "BLOCK" && res[3] == "streams":
+		case res[0] == "XREAD" && len(res) > 5 && strings.ToUpper(res[1]) == "BLOCK" && strings.ToUpper(res[3]) == "STREAMS":
 			timeout, err := strconv.ParseFloat(res[2], 64)
 			if err != nil {
 				conn.Write([]byte("-ERR invalid timeout\r\n"))
