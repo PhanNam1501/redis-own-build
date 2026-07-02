@@ -35,3 +35,7 @@ bin/
 tmp/
 temp/
 *.log
+
+# Generated binaries
+redis-server
+your_program
