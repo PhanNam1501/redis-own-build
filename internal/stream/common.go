@@ -1,8 +1,9 @@
 package stream
 
 type Entry struct {
-	ID     string
-	Values map[string]string
+	ID       string
+	Values   map[string]string
+	KeyOrder []string // Track insertion order of keys
 }
 
 type IDError struct {
@@ -17,6 +18,7 @@ type Stream interface {
 	Add(key string, id string, values map[string]string) (string, error)
 	CheckExist(key string) (bool, bool)
 	Get(key string) ([]Entry, bool)
+	Range(key string, startId string, endId string) ([]Entry, bool)
 }
 
 type stream struct {

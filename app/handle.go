@@ -169,6 +169,28 @@ func handleConnection(conn net.Conn) {
 				response = fmt.Sprintf("$%d\r\n%s\r\n", len(addedId), addedId)
 				conn.Write([]byte(response))
 			}
+		case res[0] == "XRANGE" && len(res) >= 4:
+			mu.RLock()
+			key := res[1]
+			startId := res[2]
+			endId := res[3]
+			entries, _ := streamMap.Range(key, startId, endId)
+			mu.RUnlock()
+
+			response := fmt.Sprintf("*%d\r\n", len(entries))
+			for _, entry := range entries {
+				response += "*2\r\n"
+				response += fmt.Sprintf("$%d\r\n%s\r\n", len(entry.ID), entry.ID)
+
+				kvCount := len(entry.KeyOrder) * 2
+				response += fmt.Sprintf("*%d\r\n", kvCount)
+				for _, k := range entry.KeyOrder {
+					v := entry.Values[k]
+					response += fmt.Sprintf("$%d\r\n%s\r\n", len(k), k)
+					response += fmt.Sprintf("$%d\r\n%s\r\n", len(v), v)
+				}
+			}
+			conn.Write([]byte(response))
 		}
 	}
 }
