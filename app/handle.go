@@ -191,6 +191,67 @@ func handleConnection(conn net.Conn) {
 				}
 			}
 			conn.Write([]byte(response))
+		case res[0] == "XREAD" && res[1] == "STREAMS" && len(res) >= 4:
+			mu.RLock()
+			numStreams := (len(res) - 2) / 2
+
+			var streamResults []struct {
+				key     string
+				entries []interface{}
+			}
+
+			for i := 0; i < numStreams; i++ {
+				keyIdx := 2 + i
+				idIdx := 2 + numStreams + i
+				key := res[keyIdx]
+				id := res[idIdx]
+
+				entries, _ := streamMap.ReadGreater(key, id)
+
+				entriesArray := make([]interface{}, len(entries))
+				for j, entry := range entries {
+					entryArray := []interface{}{
+						entry.ID,
+					}
+					kvArray := make([]interface{}, 0)
+					for _, k := range entry.KeyOrder {
+						kvArray = append(kvArray, k, entry.Values[k])
+					}
+					entryArray = append(entryArray, kvArray)
+					entriesArray[j] = entryArray
+				}
+
+				streamResults = append(streamResults, struct {
+					key     string
+					entries []interface{}
+				}{key, entriesArray})
+			}
+			mu.RUnlock()
+
+			// Format RESP response: array of streams
+			response := fmt.Sprintf("*%d\r\n", len(streamResults))
+			for _, stream := range streamResults {
+				response += "*2\r\n"
+				response += fmt.Sprintf("$%d\r\n%s\r\n", len(stream.key), stream.key)
+				response += fmt.Sprintf("*%d\r\n", len(stream.entries))
+
+				for _, entry := range stream.entries {
+					entryArray := entry.([]interface{})
+					response += "*2\r\n"
+					// ID
+					id := entryArray[0].(string)
+					response += fmt.Sprintf("$%d\r\n%s\r\n", len(id), id)
+					// KV pairs
+					kvArray := entryArray[1].([]interface{})
+					response += fmt.Sprintf("*%d\r\n", len(kvArray))
+					for _, kv := range kvArray {
+						kvStr := kv.(string)
+						response += fmt.Sprintf("$%d\r\n%s\r\n", len(kvStr), kvStr)
+					}
+				}
+			}
+			conn.Write([]byte(response))
+
 		}
 	}
 }

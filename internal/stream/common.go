@@ -19,6 +19,7 @@ type Stream interface {
 	CheckExist(key string) (bool, bool)
 	Get(key string) ([]Entry, bool)
 	Range(key string, startId string, endId string) ([]Entry, bool)
+	ReadGreater(key string, id string) ([]Entry, bool)
 }
 
 type stream struct {
