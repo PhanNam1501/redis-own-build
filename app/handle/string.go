@@ -54,7 +54,12 @@ func (h *Handler) INCR(conn net.Conn, res []string) {
 	key := res[1]
 	val, ok := h.RedisMap[key]
 	if !ok {
-		conn.Write([]byte("$-1\r\n"))
+		h.RedisMap[res[1]] = &RedisValue{
+			Value:    strconv.Itoa(1),
+			ExpireAt: 0,
+		}
+		response := fmt.Sprintf(":%d\r\n", 1)
+		conn.Write([]byte(response))
 	} else {
 		valInt, _ := strconv.Atoi(val.Value)
 		valInt++
