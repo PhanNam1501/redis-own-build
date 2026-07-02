@@ -33,6 +33,7 @@ func handleConnection(conn net.Conn) {
 		if len(res) == 0 {
 			continue
 		}
+		fmt.Println("DEBUG Command:", res)
 		switch {
 		case res[0] == "PING":
 			conn.Write([]byte("+PONG\r\n"))
@@ -191,7 +192,7 @@ func handleConnection(conn net.Conn) {
 				}
 			}
 			conn.Write([]byte(response))
-		case res[0] == "XREAD" && res[1] == "STREAMS" && len(res) >= 4:
+		case res[0] == "XREAD" && len(res) >= 4 && res[1] == "STREAMS":
 			mu.RLock()
 			numStreams := (len(res) - 2) / 2
 
@@ -228,7 +229,6 @@ func handleConnection(conn net.Conn) {
 			}
 			mu.RUnlock()
 
-			// Format RESP response: array of streams
 			response := fmt.Sprintf("*%d\r\n", len(streamResults))
 			for _, stream := range streamResults {
 				response += "*2\r\n"
@@ -238,10 +238,8 @@ func handleConnection(conn net.Conn) {
 				for _, entry := range stream.entries {
 					entryArray := entry.([]interface{})
 					response += "*2\r\n"
-					// ID
 					id := entryArray[0].(string)
 					response += fmt.Sprintf("$%d\r\n%s\r\n", len(id), id)
-					// KV pairs
 					kvArray := entryArray[1].([]interface{})
 					response += fmt.Sprintf("*%d\r\n", len(kvArray))
 					for _, kv := range kvArray {
