@@ -5,8 +5,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/codecrafters-io/redis-starter-go/internal/queue"
-	"github.com/codecrafters-io/redis-starter-go/internal/stream"
+	"github.com/codecrafters-io/redis-starter-go/app/handle"
 )
 
 var _ = net.Listen
@@ -14,9 +13,7 @@ var _ = os.Exit
 
 func main() {
 	fmt.Println("Logs from your program will appear here!")
-	redisMap = make(map[string]*RedisValue)
-	listMap = queue.NewQueue()
-	streamMap = stream.NewStream()
+	h := handle.NewHandler()
 
 	l, err := net.Listen("tcp", "0.0.0.0:6379")
 	if err != nil {
@@ -31,6 +28,6 @@ func main() {
 			continue
 		}
 
-		go handleConnection(conn)
+		go handleConnection(conn, h)
 	}
 }

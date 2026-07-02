@@ -1,4 +1,4 @@
-package main
+package handle
 
 import (
 	"fmt"
@@ -6,14 +6,14 @@ import (
 	"strconv"
 )
 
-func handleXAdd(conn net.Conn, res []string) {
+func (h *Handler) XAdd(conn net.Conn, res []string) {
 	keyStream := res[1]
 	id := res[2]
 	values := make(map[string]string)
 	for i := 3; i+1 < len(res); i += 2 {
 		values[res[i]] = res[i+1]
 	}
-	addedId, err := streamMap.Add(keyStream, id, values)
+	addedId, err := h.StreamMap.Add(keyStream, id, values)
 	var response string
 	if err != nil {
 		response = fmt.Sprintf("-%s\r\n", err.Error())
@@ -24,11 +24,11 @@ func handleXAdd(conn net.Conn, res []string) {
 	}
 }
 
-func handleXRange(conn net.Conn, res []string) {
+func (h *Handler) XRange(conn net.Conn, res []string) {
 	key := res[1]
 	startId := res[2]
 	endId := res[3]
-	entries, _ := streamMap.Range(key, startId, endId)
+	entries, _ := h.StreamMap.Range(key, startId, endId)
 
 	response := fmt.Sprintf("*%d\r\n", len(entries))
 	for _, entry := range entries {
@@ -46,7 +46,7 @@ func handleXRange(conn net.Conn, res []string) {
 	conn.Write([]byte(response))
 }
 
-func handleXRead(conn net.Conn, res []string) {
+func (h *Handler) XRead(conn net.Conn, res []string) {
 	numStreams := (len(res) - 2) / 2
 
 	var streamResults []struct {
@@ -60,7 +60,7 @@ func handleXRead(conn net.Conn, res []string) {
 		key := res[keyIdx]
 		id := res[idIdx]
 
-		entries, _ := streamMap.ReadGreater(key, id)
+		entries, _ := h.StreamMap.ReadGreater(key, id)
 
 		entriesArray := make([]interface{}, len(entries))
 		for j, entry := range entries {
@@ -103,7 +103,7 @@ func handleXRead(conn net.Conn, res []string) {
 	conn.Write([]byte(response))
 }
 
-func handleXReadBlock(conn net.Conn, res []string) {
+func (h *Handler) XReadBlock(conn net.Conn, res []string) {
 	timeout, err := strconv.ParseFloat(res[2], 64)
 	if err != nil {
 		conn.Write([]byte("-ERR invalid timeout\r\n"))
@@ -123,7 +123,7 @@ func handleXReadBlock(conn net.Conn, res []string) {
 		id := res[idIdx]
 
 		if id == "$" {
-			entries, _ := streamMap.Get(key)
+			entries, _ := h.StreamMap.Get(key)
 			if len(entries) > 0 {
 				id = entries[len(entries)-1].ID
 			} else {
@@ -131,7 +131,7 @@ func handleXReadBlock(conn net.Conn, res []string) {
 			}
 		}
 
-		entry := streamMap.Block(key, id, timeout)
+		entry := h.StreamMap.Block(key, id, timeout)
 
 		if entry.ID == "" {
 			conn.Write([]byte("*-1\r\n"))

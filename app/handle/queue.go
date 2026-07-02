@@ -1,4 +1,4 @@
-package main
+package handle
 
 import (
 	"fmt"
@@ -6,25 +6,25 @@ import (
 	"strconv"
 )
 
-func handleRPush(conn net.Conn, res []string) {
-	length := listMap.RPush(res[1], res[2:]...)
+func (h *Handler) RPush(conn net.Conn, res []string) {
+	length := h.ListMap.RPush(res[1], res[2:]...)
 	response := fmt.Sprintf(":%d\r\n", length)
 	conn.Write([]byte(response))
 }
 
-func handleLPush(conn net.Conn, res []string) {
-	length := listMap.LPush(res[1], res[2:]...)
+func (h *Handler) LPush(conn net.Conn, res []string) {
+	length := h.ListMap.LPush(res[1], res[2:]...)
 	response := fmt.Sprintf(":%d\r\n", length)
 	conn.Write([]byte(response))
 }
 
-func handleLPop(conn net.Conn, res []string) {
+func (h *Handler) LPop(conn net.Conn, res []string) {
 	arr := []string{}
 	if len(res) == 3 {
 		cnt, _ := strconv.Atoi(res[2])
-		arr = listMap.LPOP(res[1], cnt)
+		arr = h.ListMap.LPOP(res[1], cnt)
 	} else {
-		arr = listMap.LPOP(res[1], 1)
+		arr = h.ListMap.LPOP(res[1], 1)
 	}
 	if len(res) == 2 {
 		response := fmt.Sprintf("$%d\r\n%s\r\n", len(arr[0]), arr[0])
@@ -38,13 +38,13 @@ func handleLPop(conn net.Conn, res []string) {
 	}
 }
 
-func handleBLPop(conn net.Conn, res []string) {
+func (h *Handler) BLPop(conn net.Conn, res []string) {
 	exp, err := strconv.ParseFloat(res[2], 64)
 	if err != nil {
 		conn.Write([]byte("-ERR invalid timeout\r\n"))
 		return
 	}
-	arr := listMap.BLPOP(res[1], exp)
+	arr := h.ListMap.BLPOP(res[1], exp)
 	if len(arr) == 0 {
 		conn.Write([]byte("*-1\r\n"))
 	} else {
@@ -53,10 +53,10 @@ func handleBLPop(conn net.Conn, res []string) {
 	}
 }
 
-func handleLRange(conn net.Conn, res []string) {
+func (h *Handler) LRange(conn net.Conn, res []string) {
 	start, _ := strconv.Atoi(res[2])
 	end, _ := strconv.Atoi(res[3])
-	elements := listMap.Query(res[1], start, end)
+	elements := h.ListMap.Query(res[1], start, end)
 
 	response := fmt.Sprintf("*%d\r\n", len(elements))
 	for _, elem := range elements {
@@ -65,8 +65,8 @@ func handleLRange(conn net.Conn, res []string) {
 	conn.Write([]byte(response))
 }
 
-func handleLLen(conn net.Conn, res []string) {
-	length := listMap.Len(res[1])
+func (h *Handler) LLen(conn net.Conn, res []string) {
+	length := h.ListMap.Len(res[1])
 	response := fmt.Sprintf(":%d\r\n", length)
 	conn.Write([]byte(response))
 }
