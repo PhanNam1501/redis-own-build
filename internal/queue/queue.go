@@ -12,15 +12,18 @@ func (q *queue) Len(key string) int {
 
 func (q *queue) RPush(key string, values ...string) int {
 	q.mu.Lock()
-	defer q.mu.Unlock()
 	l := q.listMap[key]
 	for _, v := range values {
 		l = append(l, v)
 	}
 	q.listMap[key] = l
+	var waiter *WaitingClient
 	if len(q.waiting[key]) > 0 {
-		waiter := q.waiting[key][0]
-		q.waiting[key] = q.waiting[key][1:len(q.waiting[key])]
+		waiter = q.waiting[key][0]
+		q.waiting[key] = q.waiting[key][1:]
+	}
+	q.mu.Unlock()
+	if waiter != nil {
 		close(waiter.ch)
 	}
 	return len(l)
@@ -28,7 +31,6 @@ func (q *queue) RPush(key string, values ...string) int {
 
 func (q *queue) LPush(key string, values ...string) int {
 	q.mu.Lock()
-	defer q.mu.Unlock()
 	l := q.listMap[key]
 	newL := make([]string, 0, len(l)+len(values))
 	for i := len(values) - 1; i >= 0; i-- {
@@ -36,6 +38,15 @@ func (q *queue) LPush(key string, values ...string) int {
 	}
 	newL = append(newL, l...)
 	q.listMap[key] = newL
+	var waiter *WaitingClient
+	if len(q.waiting[key]) > 0 {
+		waiter = q.waiting[key][0]
+		q.waiting[key] = q.waiting[key][1:]
+	}
+	q.mu.Unlock()
+	if waiter != nil {
+		close(waiter.ch)
+	}
 	return len(newL)
 }
 
