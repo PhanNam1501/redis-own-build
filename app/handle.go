@@ -249,7 +249,69 @@ func handleConnection(conn net.Conn) {
 				}
 			}
 			conn.Write([]byte(response))
+		case res[0] == "XREAD" && len(res) > 5 && res[1] == "BLOCK" && res[3] == "streams":
+			timeout, err := strconv.ParseFloat(res[2], 64)
+			if err != nil {
+				conn.Write([]byte("-ERR invalid timeout\r\n"))
+				continue
+			}
 
+			numStreams := (len(res) - 4) / 2
+			var streamResults []struct {
+				key     string
+				entries []interface{}
+			}
+
+			for i := 0; i < numStreams; i++ {
+				keyIdx := 4 + i
+				idIdx := 4 + numStreams + i
+				key := res[keyIdx]
+				id := res[idIdx]
+
+				mu.RLock()
+				entry := streamMap.Block(key, id, timeout)
+				mu.RUnlock()
+
+				if entry.ID == "" {
+					conn.Write([]byte("*-1\r\n"))
+					continue
+				}
+
+				entryArray := []interface{}{entry.ID}
+				kvArray := make([]interface{}, 0)
+				for _, k := range entry.KeyOrder {
+					kvArray = append(kvArray, k, entry.Values[k])
+				}
+				entryArray = append(entryArray, kvArray)
+
+				streamResults = append(streamResults, struct {
+					key     string
+					entries []interface{}
+				}{key, []interface{}{entryArray}})
+			}
+
+			if len(streamResults) > 0 {
+				response := fmt.Sprintf("*%d\r\n", len(streamResults))
+				for _, stream := range streamResults {
+					response += "*2\r\n"
+					response += fmt.Sprintf("$%d\r\n%s\r\n", len(stream.key), stream.key)
+					response += fmt.Sprintf("*%d\r\n", len(stream.entries))
+
+					for _, entry := range stream.entries {
+						entryArray := entry.([]interface{})
+						response += "*2\r\n"
+						id := entryArray[0].(string)
+						response += fmt.Sprintf("$%d\r\n%s\r\n", len(id), id)
+						kvArray := entryArray[1].([]interface{})
+						response += fmt.Sprintf("*%d\r\n", len(kvArray))
+						for _, kv := range kvArray {
+							kvStr := kv.(string)
+							response += fmt.Sprintf("$%d\r\n%s\r\n", len(kvStr), kvStr)
+						}
+					}
+				}
+				conn.Write([]byte(response))
+			}
 		}
 	}
 }
